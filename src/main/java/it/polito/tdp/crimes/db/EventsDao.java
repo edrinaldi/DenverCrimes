@@ -6,8 +6,9 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
-import it.polito.tdp.crimes.model.Event;
 
+import it.polito.tdp.crimes.model.Adiacenza;
+import it.polito.tdp.crimes.model.Event;
 
 public class EventsDao {
 	
@@ -53,5 +54,53 @@ public class EventsDao {
 			return null ;
 		}
 	}
-
+	
+	public List<Adiacenza> getArchi(String categoria, int mese) {
+		String sql = "select e1.offense_type_id as v1, e2.offense_type_id as v2, "
+				+ "count(distinct e1.`neighborhood_id`) as peso "
+				+ "from events e1, events e2 "
+				+ "where e1.offense_type_id > e2.offense_type_id "
+				+ "and e1.offense_category_id = ? "
+				+ "and e2.offense_category_id = e1.offense_category_id "
+				+ "and month(e1.reported_date) = ? "
+				+ "and month(e2.reported_date) = month(e1.reported_date) "
+				+ "and e1.`neighborhood_id` = e2.neighborhood_id "
+				+ "group by e1.offense_type_id, e2.offense_type_id";
+		List<Adiacenza> archi = new ArrayList<>();
+		try {
+			Connection conn = DBConnect.getConnection() ;
+			PreparedStatement st = conn.prepareStatement(sql) ;
+			st.setString(1, categoria);
+			st.setInt(2, mese);			
+			ResultSet res = st.executeQuery() ;
+			while(res.next()) {
+				archi.add(new Adiacenza(res.getString("v1"), res.getString("v2"),
+						res.getInt("peso")));
+			}
+		}
+		catch(SQLException e) {
+			e.printStackTrace();
+			return null;
+		}
+		return archi;
+	}
+	
+	public List<String> getCategorie() {
+		String sql = "select distinct offense_category_id "
+				+ "from events";
+		List<String> categorie = new ArrayList<>();
+		try {
+			Connection conn = DBConnect.getConnection() ;
+			PreparedStatement st = conn.prepareStatement(sql) ;		
+			ResultSet res = st.executeQuery() ;
+			while(res.next()) {
+				categorie.add(res.getString("offense_category_id"));
+			}
+		}
+		catch(SQLException e) {
+			e.printStackTrace();
+			return null;
+		}
+		return categorie;	
+	}
 }

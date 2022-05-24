@@ -6,7 +6,7 @@ package it.polito.tdp.crimes;
 
 import java.net.URL;
 import java.util.ResourceBundle;
-
+import it.polito.tdp.crimes.model.Adiacenza;
 import it.polito.tdp.crimes.model.Model;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
@@ -25,16 +25,16 @@ public class FXMLController {
     private URL location;
 
     @FXML // fx:id="boxCategoria"
-    private ComboBox<?> boxCategoria; // Value injected by FXMLLoader
+    private ComboBox<String> boxCategoria; // Value injected by FXMLLoader
 
     @FXML // fx:id="boxMese"
-    private ComboBox<?> boxMese; // Value injected by FXMLLoader
+    private ComboBox<Integer> boxMese; // Value injected by FXMLLoader
 
     @FXML // fx:id="btnAnalisi"
     private Button btnAnalisi; // Value injected by FXMLLoader
 
     @FXML // fx:id="boxArco"
-    private ComboBox<?> boxArco; // Value injected by FXMLLoader
+    private ComboBox<Adiacenza> boxArco; // Value injected by FXMLLoader
 
     @FXML // fx:id="btnPercorso"
     private Button btnPercorso; // Value injected by FXMLLoader
@@ -44,12 +44,41 @@ public class FXMLController {
 
     @FXML
     void doCalcolaPercorso(ActionEvent event) {
-
+    	this.txtResult.clear();
+    	if(this.boxArco.getItems().size() == 0) {
+    		this.txtResult.appendText("Devi prima fare Analisi Quartieri");
+    		return;
+    	}
+    	if(this.boxArco.getValue() == null) {
+    		this.txtResult.appendText("Devi selezionare un arco dalla tendina");
+    		return;
+    	}
+    	String sorgente = this.boxArco.getValue().getV1();
+    	String destinazione = this.boxArco.getValue().getV2();
+    	for(String s : this.model.calcolaPercorso(sorgente, destinazione)) {
+    		this.txtResult.appendText(s + "\n");
+    	}
     }
 
     @FXML
     void doCreaGrafo(ActionEvent event) {
-
+    	this.txtResult.clear();
+    	this.boxArco.getItems().clear();
+    	if(this.boxCategoria.getValue() == null) {
+    		this.txtResult.appendText("Devi selezionare una categoria dalla tendina");
+    		return;
+    	}
+    	if(this.boxMese.getValue() == null) {
+    		this.txtResult.appendText("Devi selezionare un mese dalla tendina");
+    		return;
+    	}
+    	String categoria = this.boxCategoria.getValue();
+    	int mese = this.boxMese.getValue();
+    	this.model.creaGrafo(categoria, mese);
+    	for(Adiacenza a : this.model.getArchiPesoMedio()) {
+        	this.txtResult.appendText(a + "\n");
+        	this.boxArco.getItems().add(a);
+    	}
     }
 
     @FXML // This method is called by the FXMLLoader when initialization is complete
@@ -65,5 +94,11 @@ public class FXMLController {
     
     public void setModel(Model model) {
     	this.model = model;
+    	for(String c : this.model.getCategorie()) {
+        	this.boxCategoria.getItems().add(c);
+    	}
+    	for(int i=1;i<=12;i++) {
+    		this.boxMese.getItems().add(i);
+    	}
     }
 }
